@@ -1,54 +1,39 @@
+using GraphQL.Server.Ui.Voyager;
 using Microsoft.EntityFrameworkCore;
 // using BackendGateway.Infrastructure; // removed - assembly/namespace not found in this project
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddDbContext<CoffeeDbContext>(options =>
+var AllowspecficOrigins = "_allowspecficOrigins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(AllowspecficOrigins, policy =>
+    {
+        policy.AllowAnyOrigin();
+        policy.AllowAnyMethod();
+        policy.AllowAnyHeader();
+    });
+});
+// Register a DbContextFactory so services can create contexts on demand.
+builder.Services.AddDbContextFactory<CoffeeDbContext>(options =>
     options.UseInMemoryDatabase("CoffeeDb"));
+
+builder.Services.AddScoped<IMenuItemServices, MenuItemServices>();
+builder.Services.AddScoped<ICustomerServices, CustomerServices>();
 
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<Query>()
     .AddFiltering();
 
-// Add services to the container.
-// Learn more about onfiguring OpenAPI at https://aka.ms/aspnet/openapi
-// builder.Services.AddOpenApi();
+
 
 var app = builder.Build();
 
+app.UseCors(AllowspecficOrigins);
 app.MapGraphQL();
 
-// Configure the HTTP request pipeline.
-/* if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseGraphQLVoyager("/graphql-voyager", new VoyagerOptions{
+    GraphQLEndPoint = "/graphql"
+});
 
-app.UseHttpsRedirection(); */
-
-/* var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-}; */
-
-/* app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
- */
 app.Run();
-
-/* record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-} */

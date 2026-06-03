@@ -1,13 +1,20 @@
 public class Query
 {
-    public IQueryable<MenuItem> GetMenuItems([Service] CoffeeDbContext db)
+    public System.Collections.Generic.List<MenuItem> GetMenuItems([Service] IMenuItemServices menuItemServices)
     {
-        db.Database.EnsureCreated();
-        return db.MenuItems;
+        return menuItemServices.GetMenuItems();
     }
+
    
-    public IQueryable<Order> GetOrders([Service] CoffeeDbContext db, int customerId) =>
-        db.Orders.Where(o => o.CustomerId == customerId);
-    public Customer GetCustomer([Service] CoffeeDbContext db, int id) =>
-        db.Customers.FirstOrDefault(c => c.Id == id)!;
+    public System.Collections.Generic.List<Order> GetOrders([Service] Microsoft.EntityFrameworkCore.IDbContextFactory<CoffeeDbContext> dbFactory, int customerId)
+    {
+        using var db = dbFactory.CreateDbContext();
+        db.Database.EnsureCreated();
+        return db.Orders.Where(o => o.CustomerId == customerId).ToList();
+    }
+
+    public Customer GetCustomer([Service] ICustomerServices customerServices, int id)
+    {
+        return customerServices.GetCustomers().FirstOrDefault(c => c.Id == id)!;
+    }
 }
